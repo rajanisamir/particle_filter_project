@@ -1,4 +1,4 @@
-image: /home/nauen/catkin_ws/src/intro_robo/lab_c_map_environment_using_slam/map/map.pgm
+image: maze_map.pgm
 resolution: 0.050000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0
