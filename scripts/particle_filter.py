@@ -55,7 +55,6 @@ class Particle:
 
 class ParticleFilter:
 
-
     def __init__(self):
 
         # once everything is setup initialized will be set to true
@@ -75,7 +74,7 @@ class ParticleFilter:
         self.map = OccupancyGrid()
 
         # the number of particles used in the particle filter
-        self.num_particles = 10000
+        self.num_particles = 100
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -83,7 +82,7 @@ class ParticleFilter:
         # initialize the estimated robot pose
         self.robot_estimate = Pose()
 
-        # set threshold values for linear and angular movement before we preform an update
+        # set threshold values for linear and angular movement before we perform an update
         self.lin_mvmt_threshold = 0.2        
         self.ang_mvmt_threshold = (np.pi / 6)
 
@@ -115,7 +114,6 @@ class ParticleFilter:
         self.initialized = True
 
 
-
     def get_map(self, data):
 
         self.map = data
@@ -123,33 +121,63 @@ class ParticleFilter:
 
     def initialize_particle_cloud(self):
         
-        # TODO
+        # Wait until get_map callback sets the map by checking if frame_id
+        #  has been populated.
+        while self.map.header.frame_id == '':
+            continue
 
+        # Store list of all open spaces in map in available_indices. Choose
+        #  particle positions uniformly at random, with replacement; store
+        #  these positions in chosen_indices.
+        available_indices = []
+        for i in range(self.map.info.width * self.map.info.height):
+            if self.map.data[i] == 0:
+                available_indices.append(i)
+        chosen_indices = np.random.choice(available_indices, self.num_particles)
+        
+        # For each chosen particle index, initialize a particle with the appropriate
+        #  coordinates and a random yaw angle in the interval [0, 360). Assign the
+        #  weights as 1; they will be normalized in normalize_particles.
+        # print(self.map.info.origin)
+        # print(self.map.info.resolution)
+        for idx in chosen_indices:
+            idx_y = int(idx / self.map.info.width)
+            idx_x = idx % self.map.info.width
+            y = idx_y * self.map.info.resolution + self.map.info.origin.position.y
+            x = idx_x * self.map.info.resolution + self.map.info.origin.position.x
+            theta = np.random.random() * 360
 
+            point = Point(x, y, 0.)
+            quaternion = Quaternion(*quaternion_from_euler(0., 0., theta, 'rxyz'))
+
+            particle_pose = Pose(point, quaternion)
+            particle_weight = 1
+            particle = Particle(particle_pose, particle_weight)
+            self.particle_cloud.append(particle)
+        
+        # Normalize particle weights and publish particle cloud.
         self.normalize_particles()
 
         self.publish_particle_cloud()
 
 
     def normalize_particles(self):
-        # make all the particle weights sum to 1.0
         
-        # TODO
-
-
-
+        # make all the particle weights sum to 1.0
+        weight_sum = sum(particle.w for particle in self.particle_cloud)
+        for particle in self.particle_cloud:
+            particle.w /= weight_sum
+        
     def publish_particle_cloud(self):
 
         particle_cloud_pose_array = PoseArray()
         particle_cloud_pose_array.header = Header(stamp=rospy.Time.now(), frame_id=self.map_topic)
-        particle_cloud_pose_array.poses
+        # particle_cloud_pose_array.poses
 
         for part in self.particle_cloud:
             particle_cloud_pose_array.poses.append(part.pose)
 
         self.particles_pub.publish(particle_cloud_pose_array)
-
-
 
 
     def publish_estimated_robot_pose(self):
@@ -160,11 +188,11 @@ class ParticleFilter:
         self.robot_estimate_pub.publish(robot_pose_estimate_stamped)
 
 
-
     def resample_particles(self):
 
         # TODO
 
+        pass
 
 
     def robot_scan_received(self, data):
@@ -204,7 +232,6 @@ class ParticleFilter:
             self.odom_pose_last_motion_update = self.odom_pose
             return
 
-
         if self.particle_cloud:
 
             # check to see if we've moved far enough to perform an update
@@ -238,20 +265,20 @@ class ParticleFilter:
                 self.odom_pose_last_motion_update = self.odom_pose
 
 
-
     def update_estimated_robot_pose(self):
         # based on the particles within the particle cloud, update the robot pose estimate
         
         # TODO
 
+        pass
 
     
     def update_particle_weights_with_measurement_model(self, data):
 
         # TODO
 
+        pass
 
-        
 
     def update_particles_with_motion_model(self):
 
@@ -260,11 +287,12 @@ class ParticleFilter:
 
         # TODO
 
+        pass
+
 
 
 if __name__=="__main__":
     
-
     pf = ParticleFilter()
 
     rospy.spin()
