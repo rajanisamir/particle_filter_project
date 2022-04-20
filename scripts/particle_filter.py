@@ -290,15 +290,15 @@ class ParticleFilter:
         curr_yaw = get_yaw_from_pose(self.odom_pose.pose)
         old_yaw = get_yaw_from_pose(self.odom_pose_last_motion_update.pose)
 
-        delta_rot1 = math.atan2(curr_y - old_y, curr_x - old_x)
+        delta_rot1 = math.atan2(curr_y - old_y, curr_x - old_x) - curr_yaw
         delta_trans = math.sqrt((curr_x - old_x)**2 + (curr_y - old_y)**2)
         delta_rot2 = curr_yaw - old_yaw - delta_rot1
 
         new_particle_cloud = []
         
         for particle in self.particle_cloud:
-            x = particle.pose.position.x + delta_trans
-            y = particle.pose.position.x
+            x = particle.pose.position.x
+            y = particle.pose.position.y
             theta = get_yaw_from_pose(particle.pose)
 
             # Here, we should incorporate noise: see algorithm in Probabilistic Robotics book.
