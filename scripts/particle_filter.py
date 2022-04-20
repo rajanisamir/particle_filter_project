@@ -179,23 +179,25 @@ class ParticleFilter:
         for part in self.particle_cloud:
             particle_cloud_pose_array.poses.append(part.pose)
 
+        # Uses odom data from robot to update particle positions
+        new_pose = self.odom_pose.pose.position
+        if self.odom_pose_last_motion_update:
+            
+            # Calculates change (x, y, z) from old pose to new pose based on odom data
+            change = (new_pose.x - self.odom_pose_last_motion_update.pose.position.x,
+                        new_pose.y - self.odom_pose_last_motion_update.pose.position.y,
+                        new_pose.z - self.odom_pose_last_motion_update.pose.position.z)
+            
+        
+        self.odom_pose_last_motion_update = new_pose
+        
+        
+        
         self.particles_pub.publish(particle_cloud_pose_array)
 
 
     def publish_estimated_robot_pose(self):
 
-        print(self.odom_pose.pose.position.x)
-        new_pose = self.odom_pose.pose.position
-        if self.odom_pose_last_motion_update:
-            old_pose = self.odom_pose_last_motion_update
-            change = (new_pose.x - self.odom_pose_last_motion_update.pose.position.x,
-                        new_pose.y - self.odom_pose_last_motion_update.pose.position.y,
-                        new_pose.z - self.odom_pose_last_motion_update.pose.position.z)
-            print(change)
-        
-        self.odom_pose_last_motion_update = new_pose
-        
-        
         
 
         robot_pose_estimate_stamped = PoseStamped()
