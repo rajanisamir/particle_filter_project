@@ -13,8 +13,8 @@ In order to create a robust robot localization solution, these main components w
 *Include code location and function/code description*
 
 1. Initialization of particle cloud
-	2. This code is in the *initialize_particle_cloud* function and is also supported by the *normalize_particles* and *publish_particle_cloud* functions. 
-	3. The function waits for the frame_id to be populated (allowing for the pre-determined map to be loaded into place). Based on the measurements of the map (width and height), an array of possible particle locations (indices) is created, each with empty data inside of them. From these, a random sample based on the number of particles (1000) are randomly chosen. For each particle in this array of chosen_indices, an x, y, and yaw angle (0-360) is assigned, with the weights of each particle initialized to 1. In *normalize_particles*, the weights are then normalized to all sum to 1 to allow for them to act as probabilities in future resampling. *publish_particle_cloud* then publishes this array with each particle containing an x, y, and yaw angle within the boundaries of the map.
+> This code is in the *initialize_particle_cloud* function and is also supported by the *normalize_particles* and *publish_particle_cloud* functions. 
+> The function waits for the frame_id to be populated (allowing for the pre-determined map to be loaded into place). Based on the measurements of the map (width and height), an array of possible particle locations (indices) is created, each with empty data inside of them. From these, a random sample based on the number of particles (1000) are randomly chosen. For each particle in this array of chosen_indices, an x, y, and yaw angle (0-360) is assigned, with the weights of each particle initialized to 1. In *normalize_particles*, the weights are then normalized to all sum to 1 to allow for them to act as probabilities in future resampling. *publish_particle_cloud* then publishes this array with each particle containing an x, y, and yaw angle within the boundaries of the map.
 2.  Movement model
 3.  Measurement model
 4.  Resampling
