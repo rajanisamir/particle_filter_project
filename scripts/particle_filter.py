@@ -33,13 +33,12 @@ def get_yaw_from_pose(p):
     return yaw
 
 
-def draw_random_sample(n, sample_list, probabilities):
+def draw_random_sample():
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
-    
-    return np.random.choice(sample_list, n, probabilities)
-
+    # TODO
+    return
 
 
 class Particle:
@@ -134,8 +133,7 @@ class ParticleFilter:
         for i in range(self.map.info.width * self.map.info.height):
             if self.map.data[i] == 0:
                 available_indices.append(i)
-        chosen_indices = draw_random_sample(self.num_particles, available_indices, None)
-        
+        chosen_indices = np.random.choice(available_indices, self.num_particles)
         
         # For each chosen particle index, initialize a particle with the appropriate
         #  coordinates and a random yaw angle in the interval [0, 360). Assign the
@@ -179,26 +177,10 @@ class ParticleFilter:
         for part in self.particle_cloud:
             particle_cloud_pose_array.poses.append(part.pose)
 
-        # Uses odom data from robot to update particle positions
-        new_pose = self.odom_pose.pose.position
-        if self.odom_pose_last_motion_update:
-            
-            # Calculates change (x, y, z) from old pose to new pose based on odom data
-            change = (new_pose.x - self.odom_pose_last_motion_update.pose.position.x,
-                        new_pose.y - self.odom_pose_last_motion_update.pose.position.y,
-                        new_pose.z - self.odom_pose_last_motion_update.pose.position.z)
-            
-        
-        self.odom_pose_last_motion_update = new_pose
-        
-        
-        
         self.particles_pub.publish(particle_cloud_pose_array)
 
 
     def publish_estimated_robot_pose(self):
-
-        
 
         robot_pose_estimate_stamped = PoseStamped()
         robot_pose_estimate_stamped.pose = self.robot_estimate
@@ -314,12 +296,5 @@ if __name__=="__main__":
     pf = ParticleFilter()
 
     rospy.spin()
-
-
-
-
-
-
-
 
 
