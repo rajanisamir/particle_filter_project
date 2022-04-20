@@ -40,7 +40,7 @@ def draw_random_sample(sample_list, n, probabilities):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
-    return np.random.choice(sample_list, size=n, replace=True, p=probabilities)
+    return np.random.choice(sample_list, size=n, replace=True, p=probabilities).tolist()
 
 
 class Particle:
@@ -76,7 +76,7 @@ class ParticleFilter:
         self.map = OccupancyGrid()
 
         # the number of particles used in the particle filter
-        self.num_particles = 1000
+        self.num_particles = 100
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -189,10 +189,10 @@ class ParticleFilter:
 
 
     def resample_particles(self):
-
-        # TODO
-
-        pass
+        
+        # resamples particles, with replacement, according to their weights
+        weights = [particle.w for particle in self.particle_cloud]
+        self.particle_cloud = draw_random_sample(self.particle_cloud, self.num_particles, weights)
 
 
     def robot_scan_received(self, data):
@@ -267,11 +267,19 @@ class ParticleFilter:
 
     def update_estimated_robot_pose(self):
         # based on the particles within the particle cloud, update the robot pose estimate
-        
-        # TODO
 
-        pass
+        # compute weighted mean of particle positions
+        weight_sum = sum([particle.w for particle in self.particle_cloud])
+        x_avg = sum([particle.pose.position.x * particle.w for particle in self.particle_cloud]) / weight_sum
+        y_avg = sum([particle.pose.position.y * particle.w for particle in self.particle_cloud]) / weight_sum
+        theta_avg = sum([get_yaw_from_pose(particle.pose) * particle.w for particle in self.particle_cloud]) / weight_sum
 
+        # create Point and Quaternion objects based on weighted averages
+        point = Point(x_avg, y_avg, 0.)
+        quaternion = Quaternion(*quaternion_from_euler(0., 0., theta_avg, 'rxyz'))
+
+        # updated estimated pose 
+        self.robot_estimate = Pose(point, quaternion)
     
     def update_particle_weights_with_measurement_model(self, data):
 
