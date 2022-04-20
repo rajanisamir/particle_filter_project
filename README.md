@@ -1,17 +1,20 @@
 # **DRAFT**
+
 # particle_localization_project readme
 
-## Particle Localization Project Writeup
+## Particle Localiztation Project Writeup
 ### Objectives
 The goal of this project is to create a method of robot localization by means of using the particle filter algorithm within a pre-mapped space. The turtlebot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data, after which it should be able to navigate to the exit of the maze. 
 
 ### High Level Description
-In order to create a robust robot localization solution, these main components were utilized: Creating a particle cloud of 10,000 particles, each of which act as a guess for the pose of the robot (x, y, yaw). Odometry and LiDAR data (with gaussian error included) from the robot is then incorporated into the weights (probabilities) of the particles. Based on the updated probabilities, the particles are resampled and become increasingly representative of the current estimation of the robot's pose. As more odometry and LiDAR data is captured from the robot, particles cluster together close to the robot's true pose. 
+In order to create a robust robot localization solution, these main components were utilized: Creating a particle cloud of 1,000 particles, each of which act as a guess for the pose of the robot (x, y, yaw). Odometry and LiDAR data (with gaussian error included) from the robot is then incorporated into the weights (probabilities) of the particles. Based on the updated probabilities, the particles are resampled and become increasingly representative of the current estimation of the robot's pose. As more odometry and LiDAR data is captured from the robot, particles cluster together close to the robot's true pose. 
 
 ### Main Steps
 *Include code location and function/code description*
 
 1. Initialization of particle cloud
+	2. This code is in the *initialize_particle_cloud* function and is also supported by the *normalize_particles* and *publish_particle_cloud* functions. 
+	3. The function waits for the frame_id to be populated (allowing for the pre-determined map to be loaded into place). Based on the measurements of the map (width and height), an array of possible particle locations (indices) is created, each with empty data inside of them. From these, a random sample based on the number of particles (1000) are randomly chosen. For each particle in this array of chosen_indices, an x, y, and yaw angle (0-360) is assigned, with the weights of each particle initialized to 1. In *normalize_particles*, the weights are then normalized to all sum to 1 to allow for them to act as probabilities in future resampling. *publish_particle_cloud* then publishes this array with each particle containing an x, y, and yaw angle within the boundaries of the map.
 2.  Movement model
 3.  Measurement model
 4.  Resampling
