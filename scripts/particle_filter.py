@@ -18,7 +18,10 @@ import math
 
 from random import randint, random
 
-
+def sample_normal_distribution(b):
+    """ A helper function that samples from a normal distirbution with variance b.
+        Implementation taken from Probabilistic Robotics. """
+    return (b / 6) * sum([-1 + 2 * np.random.random() for i in range(12)])
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -33,12 +36,11 @@ def get_yaw_from_pose(p):
     return yaw
 
 
-def draw_random_sample():
+def draw_random_sample(sample_list, n, probabilities):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
-    # TODO
-    return
+    return np.random.choice(sample_list, size=n, replace=True, p=probabilities)
 
 
 class Particle:
@@ -133,13 +135,11 @@ class ParticleFilter:
         for i in range(self.map.info.width * self.map.info.height):
             if self.map.data[i] == 0:
                 available_indices.append(i)
-        chosen_indices = np.random.choice(available_indices, self.num_particles)
+        chosen_indices = draw_random_sample(available_indices, self.num_particles, None)
         
         # For each chosen particle index, initialize a particle with the appropriate
         #  coordinates and a random yaw angle in the interval [0, 360). Assign the
         #  weights as 1; they will be normalized in normalize_particles.
-        # print(self.map.info.origin)
-        # print(self.map.info.resolution)
         for idx in chosen_indices:
             idx_y = int(idx / self.map.info.width)
             idx_x = idx % self.map.info.width
@@ -281,13 +281,41 @@ class ParticleFilter:
 
 
     def update_particles_with_motion_model(self):
-
         # based on the how the robot has moved (calculated from its odometry), we'll  move
         # all of the particles correspondingly
+        curr_x = self.odom_pose.pose.position.x
+        old_x = self.odom_pose_last_motion_update.pose.position.x
+        curr_y = self.odom_pose.pose.position.y
+        old_y = self.odom_pose_last_motion_update.pose.position.y
+        curr_yaw = get_yaw_from_pose(self.odom_pose.pose)
+        old_yaw = get_yaw_from_pose(self.odom_pose_last_motion_update.pose)
 
-        # TODO
+        delta_rot1 = math.atan2(curr_y - old_y, curr_x - old_x)
+        delta_trans = math.sqrt((curr_x - old_x)**2 + (curr_y - old_y)**2)
+        delta_rot2 = curr_yaw - old_yaw - delta_rot1
 
-        pass
+        new_particle_cloud = []
+        
+        for particle in self.particle_cloud:
+            x = particle.pose.position.x + delta_trans
+            y = particle.pose.position.x
+            theta = get_yaw_from_pose(particle.pose)
+
+            # Here, we should incorporate noise: see algorithm in Probabilistic Robotics book.
+
+            x_new = x + delta_trans * np.cos(theta + delta_rot1)
+            y_new = y + delta_trans * np.sin(theta + delta_rot1)
+            theta_new = theta + delta_rot1 + delta_rot2
+
+            point = Point(x_new, y_new, 0.)
+            quaternion = Quaternion(*quaternion_from_euler(0., 0., theta_new, 'rxyz'))
+
+            particle_pose = Pose(point, quaternion)
+            particle_weight = 1
+            particle = Particle(particle_pose, particle_weight)
+            new_particle_cloud.append(particle)
+        
+        self.particle_cloud = new_particle_cloud
 
 
 
