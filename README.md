@@ -1,5 +1,6 @@
 # **DRAFT**
 
+
 # particle_localization_project readme
 
 ## Particle Localiztation Project Writeup
@@ -13,12 +14,18 @@ In order to create a robust robot localization solution, these main components w
 *Include code location and function/code description*
 
 1. Initialization of particle cloud
-> This code is in the *initialize_particle_cloud* function and is also supported by the *normalize_particles* and *publish_particle_cloud* functions. 
-> The function waits for the frame_id to be populated (allowing for the pre-determined map to be loaded into place). Based on the measurements of the map (width and height), an array of possible particle locations (indices) is created, each with empty data inside of them. From these, a random sample based on the number of particles (1000) are randomly chosen. For each particle in this array of chosen_indices, an x, y, and yaw angle (0-360) is assigned, with the weights of each particle initialized to 1. In *normalize_particles*, the weights are then normalized to all sum to 1 to allow for them to act as probabilities in future resampling. *publish_particle_cloud* then publishes this array with each particle containing an x, y, and yaw angle within the boundaries of the map.
+	> This code is in the *initialize_particle_cloud* function and is also supported by the *normalize_particles* and *publish_particle_cloud* functions. 
+	
+	>The function waits for the frame_id to be populated (allowing for the pre-determined map to be loaded into place). Based on the measurements of the map (width and height), an array of possible particle locations (indices) is created, each with empty data inside of them. From these, a random sample based on the number of particles (1000) are randomly chosen. For each particle in this array of chosen_indices, an x, y, and yaw angle (0-360) is assigned, with the weights of each particle initialized to 1. In *normalize_particles*, the weights are then normalized to all sum to 1 to allow for them to act as probabilities in future resampling. *publish_particle_cloud* then publishes this array with each particle containing an x, y, and yaw angle within the boundaries of the map.
 2.  Movement model
+	> This code is in the *update_particles_with_motion_model* function. This function is then called within the *robot_scan_received* function in order to update the particles with this motion model.
+
+	> This function takes the x, y, and current yaw from the robot's odometry and compares it with the previous timestep's odometry data (if available). Odometry data is updated after a minimum threshold for linear and/or angular movement has been reached - these values are defined within the *__init__* function (linear = 0.2 & ang = pi/6). The change in rotation of the robot is calculated using the math.atan2 function and the change in 2D space is calculated by finding the Euclidean distance between the previous and current time-step x and y points. These changes are then added to the current x, y, and theta's of each particle in the particle cloud, thus updating them according to the robot's odometry data. 
 3.  Measurement model
 4.  Resampling
 5.  Incorporation of noise
+	> Noise is incorporated in both the *update_particles_with_motion_model* and *update_particles_weights_with_measurement_model* functions. 
+	> 
 6.  Updating estimated robot pose
 7.  Optimization of parameters
 
