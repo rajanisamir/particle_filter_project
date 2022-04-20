@@ -33,12 +33,13 @@ def get_yaw_from_pose(p):
     return yaw
 
 
-def draw_random_sample():
+def draw_random_sample(n, sample_list, probabilities):
     """ Draws a random sample of n elements from a given list of choices and their specified probabilities.
     We recommend that you fill in this function using random_sample.
     """
-    # TODO
-    return
+    
+    return np.random.choice(sample_list, n, probabilities)
+
 
 
 class Particle:
@@ -133,7 +134,8 @@ class ParticleFilter:
         for i in range(self.map.info.width * self.map.info.height):
             if self.map.data[i] == 0:
                 available_indices.append(i)
-        chosen_indices = np.random.choice(available_indices, self.num_particles)
+        chosen_indices = draw_random_sample(self.num_particles, available_indices, None)
+        
         
         # For each chosen particle index, initialize a particle with the appropriate
         #  coordinates and a random yaw angle in the interval [0, 360). Assign the
@@ -181,6 +183,20 @@ class ParticleFilter:
 
 
     def publish_estimated_robot_pose(self):
+
+        print(self.odom_pose.pose.position.x)
+        new_pose = self.odom_pose.pose.position
+        if self.odom_pose_last_motion_update:
+            old_pose = self.odom_pose_last_motion_update
+            change = (new_pose.x - self.odom_pose_last_motion_update.pose.position.x,
+                        new_pose.y - self.odom_pose_last_motion_update.pose.position.y,
+                        new_pose.z - self.odom_pose_last_motion_update.pose.position.z)
+            print(change)
+        
+        self.odom_pose_last_motion_update = new_pose
+        
+        
+        
 
         robot_pose_estimate_stamped = PoseStamped()
         robot_pose_estimate_stamped.pose = self.robot_estimate
