@@ -1,5 +1,31 @@
-# particle_filter_project
+# **DRAFT**
+# particle_localization_project readme
 
+## Particle Localiztation Project Writeup
+### Objectives
+The goal of this project is to create a method of robot localization by means of using the particle filter algorithm within a pre-mapped space. The turtlebot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data, after which it should be able to navigate to the exit of the maze. 
+
+### High Level Description
+In order to create a robust robot localization solution, these main components were utilized: Creating a particle cloud of 10,000 particles, each of which act as a guess for the pose of the robot (x, y, yaw). Odometry and LiDAR data (with gaussian error included) from the robot is then incorporated into the weights (probabilities) of the particles. Based on the updated probabilities, the particles are resampled and become increasingly representative of the current estimation of the robot's pose. As more odometry and LiDAR data is captured from the robot, particles cluster together close to the robot's true pose. 
+
+### Main Steps
+*Include code location and function/code description*
+
+1. Initialization of particle cloud
+2.  Movement model
+3.  Measurement model
+4.  Resampling
+5.  Incorporation of noise
+6.  Updating estimated robot pose
+7.  Optimization of parameters
+
+### Challenges
+
+### Future Work
+
+### Takeaways 
+
+----------------------
 ## Implementation Plan
 
 **Team Members:** Samir Rajani, Nick Auen
