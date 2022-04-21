@@ -16,12 +16,22 @@ import numpy as np
 from numpy.random import random_sample
 import math
 
+from likelihood_field import LikelihoodField
+
 from random import randint, random
 
 def sample_normal_distribution(b):
     """ A helper function that samples from a normal distirbution with variance b.
         Implementation taken from Probabilistic Robotics. """
     return (b / 6) * sum([-1 + 2 * np.random.random() for i in range(12)])
+
+def compute_prob_zero_centered_gaussian(dist, sd):
+    """ A helper function from the likelihood field class exercise that takes in
+        distance from zero (dist) and standard deviation (sd) for gaussian and
+        returns probability (likelihood) of observation """
+    c = 1.0 / (sd * math.sqrt(2 * math.pi))
+    prob = c * math.exp((-math.pow(dist,2))/(2 * math.pow(sd, 2)))
+    return prob
 
 def get_yaw_from_pose(p):
     """ A helper function that takes in a Pose object (geometry_msgs) and returns yaw"""
@@ -72,7 +82,7 @@ class ParticleFilter:
         self.odom_frame = "odom"
         self.scan_topic = "scan"
 
-        # inialize our map
+        # inialize our map and likelihood field
         self.map = OccupancyGrid()
 
         # the number of particles used in the particle filter
@@ -119,6 +129,7 @@ class ParticleFilter:
     def get_map(self, data):
 
         self.map = data
+        self.likelihood_field = LikelihoodField(map=self.map)
     
 
     def initialize_particle_cloud(self):
@@ -194,7 +205,6 @@ class ParticleFilter:
         weights = [particle.w for particle in self.particle_cloud]
         self.particle_cloud = draw_random_sample(self.particle_cloud, self.num_particles, weights)
 
-
     def robot_scan_received(self, data):
 
         # wait until initialization is complete
@@ -248,7 +258,7 @@ class ParticleFilter:
                 np.abs(curr_yaw - old_yaw) > self.ang_mvmt_threshold):
 
                 # This is where the main logic of the particle filter is carried out
-
+                
                 self.update_particles_with_motion_model()
 
                 self.update_particle_weights_with_measurement_model(data)
@@ -282,10 +292,20 @@ class ParticleFilter:
         self.robot_estimate = Pose(point, quaternion)
     
     def update_particle_weights_with_measurement_model(self, data):
-
-        # TODO
-
-        pass
+        # Computes importance weights for each particle using the likelihood
+        # field measurement algorithm. 
+        for idx, particle in enumerate(self.particle_cloud):
+            q = 1
+            x = particle.pose.position.x
+            y = particle.pose.position.y
+            theta = get_yaw_from_pose(particle.pose)
+            for z in data.ranges:
+                if z != 0. and z != np.inf:
+                    x_z = x + z * np.cos(theta + math.radians(idx))
+                    y_z = y + z * np.cos(theta + math.radians(idx))
+                    dist = self.likelihood_field.get_closest_obstacle_distance(x_z, y_z)
+                    q *= compute_prob_zero_centered_gaussian(dist, 0.1)
+            particle.w = q
 
 
     def update_particles_with_motion_model(self):
@@ -321,6 +341,7 @@ class ParticleFilter:
             particle_pose = Pose(point, quaternion)
             particle_weight = 1
             particle = Particle(particle_pose, particle_weight)
+
             new_particle_cloud.append(particle)
         
         self.particle_cloud = new_particle_cloud
