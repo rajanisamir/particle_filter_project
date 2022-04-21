@@ -18,7 +18,7 @@ import math
 
 from likelihood_field import LikelihoodField
 
-from random import randint, random
+from random import randint, random, sample
 
 def sample_normal_distribution(b):
     """ A helper function that samples from a normal distirbution with variance b.
@@ -86,7 +86,7 @@ class ParticleFilter:
         self.map = OccupancyGrid()
 
         # the number of particles used in the particle filter
-        self.num_particles = 100
+        self.num_particles = 5000
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -100,6 +100,11 @@ class ParticleFilter:
 
         self.odom_pose_last_motion_update = None
 
+        # set up noise parameters
+        self.alpha_1 = 0.3
+        self.alpha_2 = 0.3
+        self.alpha_3 = 0.3
+        self.alpha_4 = 0.3
 
         # Setup publishers and subscribers
 
@@ -168,6 +173,9 @@ class ParticleFilter:
         
         # Normalize particle weights and publish particle cloud.
         self.normalize_particles()
+
+        # Give the publisher time to set up.
+        rospy.sleep(3)
 
         self.publish_particle_cloud()
 
@@ -257,8 +265,7 @@ class ParticleFilter:
                 np.abs(curr_y - old_y) > self.lin_mvmt_threshold or
                 np.abs(curr_yaw - old_yaw) > self.ang_mvmt_threshold):
 
-                # This is where the main logic of the particle filter is carried out
-                
+                # This is where the main logic of the particle filter is carried out                
                 self.update_particles_with_motion_model()
 
                 self.update_particle_weights_with_measurement_model(data)
@@ -294,19 +301,20 @@ class ParticleFilter:
     def update_particle_weights_with_measurement_model(self, data):
         # Computes importance weights for each particle using the likelihood
         # field measurement algorithm. 
-        for idx, particle in enumerate(self.particle_cloud):
+        for particle in self.particle_cloud:
             q = 1
             x = particle.pose.position.x
             y = particle.pose.position.y
             theta = get_yaw_from_pose(particle.pose)
-            for z in data.ranges:
-                if z != 0. and z != np.inf:
+            for idx, z in enumerate(data.ranges):
+                if z != 0.:
                     x_z = x + z * np.cos(theta + math.radians(idx))
-                    y_z = y + z * np.cos(theta + math.radians(idx))
+                    y_z = y + z * np.sin(theta + math.radians(idx))
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_z, y_z)
+                    # if compute_prob_zero_centered_gaussian(dist, 0.1) > 1:
+                        # print(compute_prob_zero_centered_gaussian(dist, 0.1))
                     q *= compute_prob_zero_centered_gaussian(dist, 0.1)
             particle.w = q
-
 
     def update_particles_with_motion_model(self):
         # based on the how the robot has moved (calculated from its odometry), we'll  move
@@ -329,11 +337,14 @@ class ParticleFilter:
             y = particle.pose.position.y
             theta = get_yaw_from_pose(particle.pose)
 
-            # Here, we should incorporate noise: see algorithm in Probabilistic Robotics book.
+            # incorporate noise
+            delta_rot1_noise = delta_rot1 - sample_normal_distribution(self.alpha_1 * delta_rot1 + self.alpha_2 * delta_trans)
+            delta_trans_noise = delta_trans - sample_normal_distribution(self.alpha_3 * delta_trans + self.alpha_4 * (delta_rot1 + delta_rot2))
+            delta_rot2_noise = delta_rot2 - sample_normal_distribution(self.alpha_1 * delta_rot2 + self.alpha_2 * delta_trans)
 
-            x_new = x + delta_trans * np.cos(theta + delta_rot1)
-            y_new = y + delta_trans * np.sin(theta + delta_rot1)
-            theta_new = theta + delta_rot1 + delta_rot2
+            x_new = x + delta_trans_noise * np.cos(theta + delta_rot1_noise)
+            y_new = y + delta_trans_noise * np.sin(theta + delta_rot1_noise)
+            theta_new = theta + delta_rot1_noise + delta_rot2_noise
 
             point = Point(x_new, y_new, 0.)
             quaternion = Quaternion(*quaternion_from_euler(0., 0., theta_new, 'rxyz'))
