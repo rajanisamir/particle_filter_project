@@ -1,9 +1,10 @@
 # **DRAFT**
 
 
+
 # particle_localization_project readme
 
-## Particle Localiztation Project Writeup
+## Particle Localization Project Writeup
 ### Objectives
 The goal of this project is to create a method of robot localization by means of using the particle filter algorithm within a pre-mapped space. The turtlebot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data, after which it should be able to navigate to the exit of the maze. 
 
@@ -22,12 +23,21 @@ In order to create a robust robot localization solution, these main components w
 
 	> This function takes the x, y, and current yaw from the robot's odometry and compares it with the previous timestep's odometry data (if available). Odometry data is updated after a minimum threshold for linear and/or angular movement has been reached - these values are defined within the *__init__* function (linear = 0.2 & ang = pi/6). The change in rotation of the robot is calculated using the math.atan2 function and the change in 2D space is calculated by finding the Euclidean distance between the previous and current time-step x and y points. These changes are then added to the current x, y, and theta's of each particle in the particle cloud, thus updating them according to the robot's odometry data. 
 3.  Measurement model
+	> This code is in the *update-particle_weights_with_measurement_model* function which also calls the *likelihood_field.py* script.
+	
+	> This function cycles through each point in the cloud and uses their x, y, and theta values with the *get_closest_obstacle_distance* function to determine what the measurement value from their LiDAR Scanner would be. This distance is then computed into a probability using a Gaussian distribution centered at zero. 
 4.  Resampling
+	> This code is in the *resample_partcles* function and is called in the *robot_scan_received* function.
+
+	> This function simply redraws the particles (with replacement) randomly according to their assigned weights by using the *draw_random_sample* function with the particle cloud, the particles, and their respective weights as parameters.
 5.  Incorporation of noise
 	> Noise is incorporated in both the *update_particles_with_motion_model* and *update_particles_weights_with_measurement_model* functions. 
-	> 
+	> In the *update_particles_with_motion_model* function, noise is incorporated into the x, y, and yaw values by **insert**
 6.  Updating estimated robot pose
-7.  Optimization of parameters
+	> This code is in the *update_estimated_robot_pose* function and is called in the *robot_scanned_received* function.
+
+	> This function first computes the weighted sum for all the particles and then divides the average x, y, and theta values by this weighted sum. These weighted means are then converted into Point and Quaternion objects and are used to update the estimated robot pose.
+8.  Optimization of parameters
 
 ### Challenges
 
