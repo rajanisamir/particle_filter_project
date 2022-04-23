@@ -304,13 +304,19 @@ class ParticleFilter:
     def update_estimated_robot_pose(self):
         """ Based on the particles within the particle cloud, update the robot pose estimate. """
 
-        # compute weighted mean of particle positions
+        # compute sum of particle weights for evaluating weighted mean
         weight_sum = sum([particle.w for particle in self.particle_cloud])
+
+        # compute weighted mean x and y coordinates
         x_avg = sum([particle.pose.position.x * particle.w for particle in self.particle_cloud]) / weight_sum
         y_avg = sum([particle.pose.position.y * particle.w for particle in self.particle_cloud]) / weight_sum
-        theta_avg = sum([get_yaw_from_pose(particle.pose) * particle.w for particle in self.particle_cloud]) / weight_sum
 
-        # create Point and Quaternion objects based on weighted averages
+        # compute weighted mean of rotation by averaging x- and y- yaw components and recombining them with arctan.
+        cos_theta_avg = sum([np.cos(get_yaw_from_pose(particle.pose)) * particle.w for particle in self.particle_cloud]) / weight_sum
+        sin_theta_avg = sum([np.sin(get_yaw_from_pose(particle.pose)) * particle.w for particle in self.particle_cloud]) / weight_sum
+        theta_avg = math.atan2(sin_theta_avg, cos_theta_avg)
+
+        # create point and quaternion for pose based on weighted averages
         point = Point(x_avg, y_avg, 0.)
         quaternion = Quaternion(*quaternion_from_euler(0., 0., theta_avg, 'rxyz'))
 
