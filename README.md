@@ -18,7 +18,7 @@ The goal of this project is to localize a robot within a space with a pre-determ
 We solved the problem of robot localization using a particle filter approach. This involves initializing a particle cloud, moving particles according the movement of the robot (tracked via odometry), assigning probability weights to each of the particles according to the likelihood field model (based on LiDAR data), resampling the particle distribution based on these weights, and estimating the robot's pose by computing weighted averages of the particle distribution. As more odometry and LiDAR data is captured from the robot, particles cluster together, converging on the robot's true pose. It was also necessary account for noise in the robot's movement and sensor measurements. This is realized in the movement step, in which zero-centered Gaussian noise is added to the movement and rotation of particles, and in the measurement step, where we account for sensor noise by using a normal distribution to compute the probability of deviations from sensor measurements before multiplying probabilities into the weight.
 
 ### Main Steps
-*cCode Location and Function Description*
+*Code Location and Function Description*
 
 1. Initialization of Particle Cloud
 	> We initialize our particle cloud in the `initialize_particle_cloud` function. This function makes calls to two supporting functions, `normalize_particles` and `publish_particle_cloud`.
@@ -30,14 +30,16 @@ We solved the problem of robot localization using a particle filter approach. Th
 
 	> The `update_particles_with_motion_model` function takes the x, y, and yaw values from the robot's odometry and compares them with the previous timestep's odometry data. Odometry data is updated after a minimum threshold for linear and/or angular movement has been reached; these thresholds are initialized within the `__init__` function for the `ParticleFilter` class. The robot's movement is modeled as a rotation, followed by a translation, followed by another rotation; the angle of the first rotation is computed by taking the arctan of the ratio of the y displacement to the x displacement of the robot, the magnitude of the translation is computed using the Euclidean distance, and the angle of the second rotation is computed by subtracting the previous yaw and first rotation from the current yaw. We the create a new particle cloud and iterate over each particle in the original particle cloud, applying the rotations and translation, with additional Gaussian noise added through a call to `sample_normal_distribution` (the width of the distribution is computed as a linear combination of the rotation and translation values, using noise parameters `alpha_1`, `alpha_2`, `alpha_3`, and `alpha_4`). The implementation of the `sample_normal_distribution` function is derived from Probabilistic Robotics; it approximates Gaussian noise by summing randomly generated numbers between -1 and 1.
 
-3.  Measurement model
-	> This code is in the *update-particle_weights_with_measurement_model* function which also calls the *likelihood_field.py* script.
+3.  Measurement Model
+	> The measurement model is implemented in the `update_particle_weights_with_measurement_model` function, which also calls the `get_closest_obstacle_distance` function from likelihood_field.py.
 	
-	> This function cycles through each point in the cloud and uses their x, y, and theta values with the *get_closest_obstacle_distance* function to determine what the measurement value from their LiDAR Scanner would be. This distance is then computed into a probability using a Gaussian distribution centered at zero. 
+	> The function `update_particle_weights_with_measurement_model` computes importance weights for each particle using the likelihood field measurement algorithm. For each particle in the cloud, it checks the LiDAR measurements of the robot in all 360 degrees. If the robot detects an object at a particular angle, the theoretical position of that object relative to the particle is computed, and the closest object to that location is calculated from the map in `get_closest_obstacle_distance`. The probability of measuring this distance is computed based on a zero-centered Gaussian distribution with width `likelihood_sigma`, which is initialized in the `__init__` function for the `ParticleFilter` class, and the probability is multiplied into the weight. 
+	
 4.  Resampling
-	> This code is in the *resample_partcles* function and is called in the *robot_scan_received* function.
+	> Resampling is performed in the `resample_particles` function, which makes an additional call to the helper function `draw_random_sample`.
 
-	> This function simply redraws the particles (with replacement) randomly according to their assigned weights by using the *draw_random_sample* function with the particle cloud, the particles, and their respective weights as parameters.
+	> The `resample_particles` function first forms a list of the particle weights to use as probabilities for the sampling function. It then sets the particle cloud to a random sample of the current particles, according to the probability distribution specified by their weights. This is achieved through a call to `draw_random_sample`, which uses `np.random.choice` to draw a random sample from a specified list of elements and probabilities, with replacement.
+
 5.  Incorporation of noise
 	> Noise is incorporated in both the *update_particles_with_motion_model* and *update_particles_weights_with_measurement_model* functions. 
 	> In the *update_particles_with_motion_model* function, noise is incorporated into the x, y, and yaw values by **insert**
