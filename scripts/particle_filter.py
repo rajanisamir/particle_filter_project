@@ -88,7 +88,7 @@ class ParticleFilter:
         self.map = OccupancyGrid()
 
         # the number of particles used in the particle filter
-        self.num_particles = 400
+        self.num_particles = 1000
 
         # initialize the particle cloud array
         self.particle_cloud = []
@@ -107,6 +107,9 @@ class ParticleFilter:
         self.alpha_2 = 0.3
         self.alpha_3 = 0.3
         self.alpha_4 = 0.3
+
+        # set up standard deviation of Gaussian for likelihood field
+        self.likelihood_sigma = 0.5
 
         # Set up publishers and subscribers
 
@@ -348,7 +351,7 @@ class ParticleFilter:
                     x_z = x + z * np.cos(theta + math.radians(idx))
                     y_z = y + z * np.sin(theta + math.radians(idx))
                     dist = self.likelihood_field.get_closest_obstacle_distance(x_z, y_z)
-                    weight *= compute_prob_zero_centered_gaussian(dist, 0.1)
+                    weight *= compute_prob_zero_centered_gaussian(dist, self.likelihood_sigma)
 
             # set particle weight
             particle.w = weight
