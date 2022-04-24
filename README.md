@@ -1,22 +1,21 @@
 # **DRAFT**
 
-
-
-# particle_localization_project readme
-
-## Particle Localization Project Writeup
+## Particle Filter Project Writeup
 
 ### Video
 
-Note: a full video is located [here](videos/particle_filter_full.mp4), but only a smaller version could be embedded in the readme:
+Note: a full video localizing the robot through a larger section of the maze is located [here](videos/particle_filter_full.mp4), but only a shorter version could be embedded in the readme due to GitHub size constraints:
 
 https://user-images.githubusercontent.com/38731359/164989913-9f8ae5e2-9b0f-4899-a982-924b5b336d76.mp4
 
+### Team Members
+Samir Rajani and Nick Auen
+
 ### Objectives
-The goal of this project is to create a method of robot localization by means of using the particle filter algorithm within a pre-mapped space. The turtlebot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data, after which it should be able to navigate to the exit of the maze. 
+The goal of this project is to localize a robot within a space with a pre-determined map (drawn using SLAM) using the particle filter algorithm. The TurtleBot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data; this location should be tracked as the robot moves throughout the maze.
 
 ### High Level Description
-In order to create a robust robot localization solution, these main components were utilized: Creating a particle cloud of 1,000 particles, each of which act as a guess for the pose of the robot (x, y, yaw). Odometry and LiDAR data (with gaussian error included) from the robot is then incorporated into the weights (probabilities) of the particles. Based on the updated probabilities, the particles are resampled and become increasingly representative of the current estimation of the robot's pose. As more odometry and LiDAR data is captured from the robot, particles cluster together close to the robot's true pose. 
+We solved the problem of robot localization using a particle filter. This involves initializing a particle cloud, moving particles according the movement of the robot (tracked via odometry), assigning probability weights to each of the particles according to the likelihood field model (based on LiDAR data), resampling the particle distribution based on these weights, and estimating the robot's pose by computing weighted averages of the particle distribution. As more odometry and LiDAR data is captured from the robot, particles cluster together, converging on the robot's true pose. It was also necessary account for noise in the robot's movement and sensor measurements. This is realized in the movement step, in which zero-centered Gaussian noise is added to the movement and rotation of particles, and in the measurement step, where we account for sensor noise by using a normal distribution to compute the probability of deviations from sensor measurements before multiplying probabilities into the weight.
 
 ### Main Steps
 *Include code location and function/code description*
