@@ -40,14 +40,20 @@ We solved the problem of robot localization using a particle filter approach. Th
 
 	> The `resample_particles` function first forms a list of the particle weights to use as probabilities for the sampling function. It then sets the particle cloud to a random sample of the current particles, according to the probability distribution specified by their weights. This is achieved through a call to `draw_random_sample`, which uses `np.random.choice` to draw a random sample from a specified list of elements and probabilities, with replacement.
 
-5.  Incorporation of noise
-	> Noise is incorporated in both the *update_particles_with_motion_model* and *update_particles_weights_with_measurement_model* functions. 
-	> In the *update_particles_with_motion_model* function, noise is incorporated into the x, y, and yaw values by **insert**
-6.  Updating estimated robot pose
-	> This code is in the *update_estimated_robot_pose* function and is called in the *robot_scanned_received* function.
+5.  Incorporation of Noise
+	> Noise is incorporated in the `update_particles_with_motion_model` and `update_particle_weights_with_measurement_model` functions. 
 
-	> This function first computes the weighted sum for all the particles and then divides the average x, y, and theta values by this weighted sum. These weighted means are then converted into Point and Quaternion objects and are used to update the estimated robot pose.
-8.  Optimization of parameters
+	> In the `update_particles_with_motion_model` function, noise is incorporated by sampling from a normal distribution when translating and rotating the particles along with the robot's movement. The implementation of the `sample_normal_distribution` function is derived from Probabilistic Robotics; it approximates Gaussian noise by summing randomly generated numbers between -1 and 1. The width of the distribution is computed as a linear combination of the rotation and translation values, using noise parameters `alpha_1`, `alpha_2`, `alpha_3`, and `alpha_4`. Thus, if the robot deviates from the path computed from its odometry, the movement will quickly be corrected by particles whose noise aligns with the deviation. In the `update_particle_weights_with_measurement_model` function, we account for noise in the sensors by allowing the theoretical positions of objects to deviate slightly from the robot's LiDAR measurements without significantly decreasing the weight of a particle. In particular, for each sensor measurement, the weight of a particle is multiplied by the probability of measuring a particular distance to the nearest object, from where the robot actually detects an object. This proability is computed in `compute_prob_zero_centered_gaussian`, with a finite width specified by `likelihood_sigma`.
+
+6.  Updating Estimated Robot Pose
+	> We update the estimated robot pose in the `update_estimated_robot_pose` function, which uses `get_yaw_from_pose` as a helper function.
+
+	> The `update_estimated_robot_pose` function computes the sum of the weights of the particles, and then computes the weighted mean of the x and y coordinates of the particles using this sum. To compute the angle of the estimated pose, the angle is split into its x- and y- components, of which weighted means are computed separately, before computing the angle associated with these averaged components using arctan. A point and quaternion are constructed with the averaged coordinates and rotation, and the robot pose is updated.
+
+7.  Optimization of Parameters
+	> Control over the parameters associated with the particle filter are located in the `__init__` function for the ParticleFilter class; the relevant parameters are `lin_mvmt_threshold`, `ang_mvmt_threshold`, `alpha_1`, `alpha_2`, `alpha_3`, `alpha_4`, and `likelihood_sigma`.
+
+	> The linear and angular movement threshold parameters control the amount the robot must move before we perform an update (including the movement update, measurement update, etc.); the default values of 0.2 and π/6 were found to be appropriate for the physical robot. The parameters `alpha_1`, `alpha_2`, `alpha_3`, and `alpha_4` the amount of noise added to the movement update step; in particular, they are used to form a linear combination of the two rotations and translation, and this linear combination is passed as a width to the `sample_normal_distribution` function. Values of 0.3 were found to work well for each of these parameters. Finally, the `likelihood_sigma` controls the width of the Gaussian in the measurement update used to compute the probability of measuring a particular distance to the nearest object, from where the robot actually detects an object. This probability is computed in `compute_prob_zero_centered_gaussian`, and is multiplied into the weight in `update_particle_weights_with_measurement_model`. A value of 0.5 was found to provide a good balance between being overly restrictive in particle selection (and thus risking honing in on the wrong area of the map) and being overly lenient (and thus never converging on a particular location).
 
 ### Challenges
 
