@@ -8,9 +8,9 @@
 
 ### Video
 
-Note: a full video is located [here](videos/particle_filter_full.mp4), but only a smaller version could be embedded in the readme.
+Note: a full video is located [here](videos/particle_filter_full.mp4), but only a smaller version could be embedded in the readme:
 
-![particle_filter](videos/particle_filter_shortened.mp4)
+https://user-images.githubusercontent.com/38731359/164989913-9f8ae5e2-9b0f-4899-a982-924b5b336d76.mp4
 
 ### Objectives
 The goal of this project is to create a method of robot localization by means of using the particle filter algorithm within a pre-mapped space. The turtlebot3 should be able to be dropped at any point throughout the maze and quickly determine its current location using a combination of odometry and LiDAR data, after which it should be able to navigate to the exit of the maze. 
