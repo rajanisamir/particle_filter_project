@@ -1,5 +1,3 @@
-# **DRAFT**
-
 ## Particle Filter Project Writeup
 
 ### Video
@@ -29,6 +27,8 @@ We solved the problem of robot localization using a particle filter approach. Th
 	> The movement model is implemented in the `update_particles_with_motion_model` function, which is called within `robot_scan_received`. Calls are also made to the helper functions `get_yaw_from_pose` and `sample_normal_distribution`.
 
 	> The `update_particles_with_motion_model` function takes the x, y, and yaw values from the robot's odometry and compares them with the previous timestep's odometry data. Odometry data is updated after a minimum threshold for linear and/or angular movement has been reached; these thresholds are initialized within the `__init__` function for the `ParticleFilter` class. The robot's movement is modeled as a rotation, followed by a translation, followed by another rotation; the angle of the first rotation is computed by taking the arctan of the ratio of the y displacement to the x displacement of the robot, the magnitude of the translation is computed using the Euclidean distance, and the angle of the second rotation is computed by subtracting the previous yaw and first rotation from the current yaw. We the create a new particle cloud and iterate over each particle in the original particle cloud, applying the rotations and translation, with additional Gaussian noise added through a call to `sample_normal_distribution` (the width of the distribution is computed as a linear combination of the rotation and translation values, using noise parameters `alpha_1`, `alpha_2`, `alpha_3`, and `alpha_4`). The implementation of the `sample_normal_distribution` function is derived from Probabilistic Robotics; it approximates Gaussian noise by summing randomly generated numbers between -1 and 1.
+
+https://user-images.githubusercontent.com/38731359/165220535-84e84041-11ac-4a53-ad5c-c7612c81cc08.mp4
 
 3.  Measurement Model
 	> The measurement model is implemented in the `update_particle_weights_with_measurement_model` function, which also calls the `get_closest_obstacle_distance` function from likelihood_field.py.
@@ -60,6 +60,8 @@ One of the main challenges we faced was that the particles didn't form a wide en
 
 ### Future Work
 One way in which the particle filter localization could be improved is by adding in values Z_rand and Z_max, which would allow for deviations in sensor measurements by introducing expected probabilities of random sensor measurements and failure to detect obstacles. We could improve the map formed with SLAM by applying manual corrections to the .pgm file, such as by connecting some of the walls that got misaligned, as shown below:
+
+<img width="289" alt="Map" src="https://user-images.githubusercontent.com/38731359/165220586-168f71ef-f6be-4e4c-94d7-31937ed702fb.png">
 
 We could also try to eliminate cases in which the particles don't converge to the position of the robot by reintroducing some particles after each resampling, but this issue is typically solved by increasing the number of particles from the beginning. Finally, if we wanted to have the robot actually navigate out of the maze, we could implement a path planning algorithm such as A* search to find an optimal route.
 
